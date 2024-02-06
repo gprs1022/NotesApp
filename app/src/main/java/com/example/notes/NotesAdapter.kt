@@ -10,10 +10,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 
-class NotesAdapter(private var notes: List<Note>,context: Context): RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
+class NotesAdapter(
+    private var notes: List<Note>,
+    private val context: Context,
+    private val userEmail: String,
+) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
 
-private val db: NotesDatabaseHelper = NotesDatabaseHelper(context)
-    class NoteViewHolder(itemView: View): RecyclerView.ViewHolder(itemView){
+    private val db: NotesDatabaseHelper = NotesDatabaseHelper(context)
+    private var userId: Int = -1
+
+    init {
+        userId = db.getUserIdByEmail(userEmail) ?: -1
+    }
+
+    class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         val titleTextView: TextView = itemView.findViewById(R.id.titleTextView)
         val contentTextView: TextView = itemView.findViewById(R.id.contentTextView)
@@ -22,7 +32,7 @@ private val db: NotesDatabaseHelper = NotesDatabaseHelper(context)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.note_item,parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.note_item, parent, false)
         return NoteViewHolder(view)
     }
 
@@ -33,21 +43,25 @@ private val db: NotesDatabaseHelper = NotesDatabaseHelper(context)
         holder.titleTextView.text = note.title
         holder.contentTextView.text = note.content
         holder.updateButton.setOnClickListener {
-            val intent = Intent(holder.itemView.context, UpdateNoteActivity::class.java).apply{
+            val intent = Intent(holder.itemView.context, UpdateNoteActivity::class.java).apply {
                 putExtra("note_id", note.id)
             }
             holder.itemView.context.startActivity(intent)
         }
 
         holder.deleteButton.setOnClickListener {
-            db.deleteNote(note.id)
-            refreshData(db.getAllNotes())
-            Toast.makeText(holder.itemView.context, "Note Deleted", Toast.LENGTH_SHORT).show()
+            val rowsDeleted = db.deleteNote(note.id) // Call deleteNote with only noteId
+            if (rowsDeleted > 0) {
+                refreshData(db.getAllNotes(userEmail))
+                Toast.makeText(holder.itemView.context, "Note Deleted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(holder.itemView.context, "Failed to delete note", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
 
-    fun refreshData(newNotes: List<Note>){
+    fun refreshData(newNotes: List<Note>) {
         notes = newNotes
         notifyDataSetChanged()
     }
