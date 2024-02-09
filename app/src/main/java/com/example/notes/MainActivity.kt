@@ -14,6 +14,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var firebaseAuth : FirebaseAuth
     private lateinit var db: NotesDatabaseHelper
     private lateinit var  notesAdapter: NotesAdapter
+
+    private var userEmail: String = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -25,6 +27,7 @@ class MainActivity : AppCompatActivity() {
         // firebase auth
 
         firebaseAuth = FirebaseAuth.getInstance()
+        userEmail = firebaseAuth.currentUser?.email ?: "" // Get current user's email
 
         binding.logOut.setOnClickListener {
 
@@ -35,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             finish()
         }
 
-        notesAdapter = NotesAdapter(db.getAllNotes(),this)
+        notesAdapter = NotesAdapter(db.getAllNotes(userEmail), this, userEmail) // Pass userEmail to getAllNotes
 
         binding.notesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.notesRecyclerView.adapter = notesAdapter
@@ -43,13 +46,18 @@ class MainActivity : AppCompatActivity() {
         binding.addButton.setOnClickListener{
 
             val intent = Intent(this, AddNoteActivity::class.java)
+
             startActivity(intent)
         }
+
+
 
     }
 
     override fun onResume() {
         super.onResume()
-        notesAdapter.refreshData(db.getAllNotes())
+        notesAdapter.refreshData(db.getAllNotes(userEmail))
     }
+
+
 }

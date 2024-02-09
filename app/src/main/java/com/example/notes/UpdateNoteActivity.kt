@@ -11,6 +11,7 @@ class UpdateNoteActivity : AppCompatActivity() {
     private lateinit var  binding: ActivityUpdateNoteBinding
     private lateinit var db: NotesDatabaseHelper
    private var noteId: Int = -1
+    private var userId: Int = -1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -20,7 +21,10 @@ class UpdateNoteActivity : AppCompatActivity() {
         db = NotesDatabaseHelper(this)
 
         noteId = intent.getIntExtra("note_id", -1)
-        if(noteId == -1){
+        userId = intent.getIntExtra("user_id", -1)
+
+
+        if(noteId == -1 || userId == -1 ){
             finish()
             return
         }
@@ -33,10 +37,8 @@ class UpdateNoteActivity : AppCompatActivity() {
 
             val newTitle= binding.UpdateTitleEditText.text.toString()
             val newContent = binding.UpdateContentEditText.text.toString()
-            val updateNote = Note(noteId, newTitle, newContent)
-            db.updateNote(updateNote)
+            db.updateNote(noteId, newTitle,newContent)
 
-            finish()
 
             Toast.makeText(this,"Changes Saved", Toast.LENGTH_SHORT).show()
         }
